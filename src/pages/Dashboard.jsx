@@ -38,8 +38,8 @@ export default function Dashboard() {
   }, [animals]);
 
   const { data: recentAnimals = [], isLoading: recentLoading } = useQuery({
-  queryKey: ["recent-animals", user?.shelter_id],
-  queryFn: async () => {
+    queryKey: ["recent-animals", user?.shelter_id],
+    queryFn: async () => {
     if (!user?.shelter_id) return [];
 
     const { data, error } = await supabase
