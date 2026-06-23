@@ -1,32 +1,49 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/api/supabaseClient";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { PawPrint, Building2, Plus, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-export default function NoShelter() {
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/login";
+import { useAuthUser } from "./useAuthUser";
+
+export function useRole() {
+  const { user } = useAuthUser();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user?.id) {
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error(error);
+      }
+
+      setProfile(data || null);
+      setLoading(false);
+    };
+
+    loadProfile();
+  }, [user]);
+
+  const role = profile?.role || "volunteer";
+
+  return {
+    user,
+    profile,
+    role,
+
+    isOwner: role === "owner",
+    isAdmin: role === "admin",
+    isStaff: role === "staff",
+    isVolunteer: role === "volunteer",
+
+    loading,
   };
-
-   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-center p-6">
-      <h1 className="text-2xl font-bold mb-2">
-        No Shelter Access
-      </h1>
-
-      <p className="text-muted-foreground max-w-md">
-        You currently do not have access to any shelter in this system.
-        If you believe this is an error, contact an administrator.
-      </p>
-
-      <div className="mt-6 text-sm text-muted-foreground">
-        Owners and admins automatically bypass shelter restrictions.
-      </div>
-    </div>
-  );
 }
