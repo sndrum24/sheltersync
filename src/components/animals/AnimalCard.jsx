@@ -69,38 +69,55 @@ export default function AnimalCard({ animal, selectable = false, selected = fals
       selected && "ring-2 ring-primary border-primary/50 bg-primary/5"
     )}>
       {/* Photo area */}
-      <div className="aspect-[4/3] bg-muted relative overflow-hidden">
-        {animal.photo_url ? (
+<div className="aspect-[4/3] bg-muted relative overflow-hidden group">
+
+  {/* IMAGE CAROUSEL */}
+  <div className="flex overflow-x-auto snap-x snap-mandatory w-full h-full">
+
+    {(animal.photo_urls?.length ? animal.photo_urls : [animal.photo_url])
+      ?.filter(Boolean)
+      .map((url, i) => (
+        <div
+          key={i}
+          className="w-full h-full flex-shrink-0 snap-center"
+        >
           <img
-            src={animal.photo_url}
+            src={url}
             alt={animal.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-        ) : (
-          <div className={cn(
-            "w-full h-full flex items-center justify-center text-5xl",
-            animal.pending && "bg-amber-50"
-          )}>
-            {speciesEmoji[animal.species] || "🐾"}
-          </div>
-        )}
-        <Badge className={cn("absolute top-3 left-3 border", status.className)}>
-          {status.label}
-        </Badge>
-        {animal.pending && (
-          <Badge className="absolute top-3 right-3 border bg-amber-400/90 text-amber-900 border-amber-500/50">
-            Pending
-          </Badge>
-        )}
-        {selectable && selected && (
-          <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
-            <CheckCircle2 className="w-10 h-10 text-primary drop-shadow" />
-          </div>
-        )}
-        {selectable && !selected && (
-          <div className="absolute top-3 right-3 w-5 h-5 rounded-full border-2 border-white bg-black/20" />
-        )}
-      </div>
+        </div>
+      ))}
+
+  </div>
+
+  {/* STATUS BADGE */}
+  <Badge
+    className={cn("absolute top-3 left-3 border", status.className)}
+  >
+    {status.label}
+  </Badge>
+
+  {/* PENDING BADGE */}
+  {animal.pending && (
+    <Badge className="absolute top-3 right-3 border bg-amber-400/90 text-amber-900 border-amber-500/50">
+      Pending
+    </Badge>
+  )}
+
+  {/* SELECTED OVERLAY */}
+  {selectable && selected && (
+    <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
+      <CheckCircle2 className="w-10 h-10 text-primary drop-shadow" />
+    </div>
+  )}
+
+  {/* SELECT OUTLINE */}
+  {selectable && !selected && (
+    <div className="absolute top-3 right-3 w-5 h-5 rounded-full border-2 border-white bg-black/20" />
+  )}
+
+</div>
 
       {/* Info */}
       <div className="p-4">

@@ -1,27 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/api/supabaseClient";
-import { hasPermission } from "@/lib/permissions";
 import { useMemo } from "react";
+import { useRole } from "./useRole";
 
 export function useShelter() {
-  const { data: user, isLoading: userLoading } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return null;
+  const {
+    user,
+    profile,
+    memberships = [],
+    isOwner,
+    isAdmin,
+    isStaff,
+    isVolunteer,
+    allowedShelters = [],
+    loading: roleLoading,
+  } = useRole();
 
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
-
-      if (error) throw error;
-      return profile;
-    },
-  });
-
-  const { data: shelters, isLoading: sheltersLoading } = useQuery({
+  // -------------------------
+  // SHELTERS QUERY
+  // -------------------------
+  const { data: shelters = [], isLoading: sheltersLoading } = useQuery({
     queryKey: ["shelters"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -29,33 +27,85 @@ export function useShelter() {
         .select("*");
 
       if (error) throw error;
-      return data ?? [];
+      return data || [];
     },
   });
 
+  // -------------------------
+  // CURRENT SHELTER (RBAC SAFE)
+  // -------------------------
   const shelter = useMemo(() => {
-    if (!Array.isArray(shelters) || !user?.shelter_id) return null;
-    return shelters.find((s) => s.id === user.shelter_id);
-  }, [shelters, user?.shelter_id]);
+    // OWNER: no forced shelter context (global access)
+    if (isOwner) return null;
 
-  const needsShelter = !!user && !user.shelter_id && !userLoading;
+    // no memberships → no shelter context
+    if (!Array.isArray(memberships) || memberships.length === 0) {
+      return null;
+    }
 
+    const first = memberships[0];
+
+    return shelters.find(
+      (s) => s.id === first?.shelter_id
+    );
+  }, [shelters, memberships, isOwner]);
+
+  // -------------------------
+  // 🔥 FIXED ACCESS LOGIC (NO MORE PROFILE SHELTER LOGIC)
+  // -------------------------
+
+  const hasShelterAccess =
+    isOwner || (Array.isArray(memberships) && memberships.length > 0);
+
+  const needsShelter =
+    !isOwner && !hasShelterAccess;
+
+  const canAccessAllShelters = isOwner;
+
+  const canManageUsers =
+    isOwner || isAdmin;
+
+  const canEditAnimals =
+    isOwner || isAdmin || isStaff;
+
+  const canDeleteAnimals =
+    isOwner || isAdmin;
+
+  const canAddNotes =
+    isOwner || isAdmin || isStaff || isVolunteer;
+
+  const canDeleteNotes =
+    isOwner || isAdmin;
+
+  // -------------------------
+  // RETURN API
+  // -------------------------
   return {
     user,
+    profile,
+
+    memberships,
+
+    isOwner,
+    isAdmin,
+    isStaff,
+    isVolunteer,
+
     shelters,
     shelter,
+    allowedShelters,
+
     needsShelter,
 
-    isLoading: userLoading || sheltersLoading,
+    isLoading: roleLoading || sheltersLoading,
 
-    isAdmin: user?.role === "admin",
-    isStaff: user?.role === "staff",
-    isVolunteer: user?.role === "volunteer",
+    canAccessAllShelters,
+    canManageUsers,
+    canEditAnimals,
+    canDeleteAnimals,
+    canAddNotes,
+    canDeleteNotes,
 
-    canManageUsers: hasPermission(user, "manageUsers"),
-    canDeleteAnimals: hasPermission(user, "deleteAnimals"),
-    canEditAnimals: hasPermission(user, "editAnimals"),
-    canAddNotes: hasPermission(user, "addNotes"),
-    canDeleteNotes: hasPermission(user, "deleteNotes"),
+    hasShelterAccess,
   };
 }

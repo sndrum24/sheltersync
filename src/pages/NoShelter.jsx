@@ -13,21 +13,20 @@ export default function NoShelter() {
     window.location.href = "/login";
   };
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-center p-6">
-      <h1 className="text-2xl font-bold">Welcome to PawShelter</h1>
+   return (
+    <div className="flex flex-col items-center justify-center min-h-screen text-center p-6">
+      <h1 className="text-2xl font-bold mb-2">
+        No Shelter Access
+      </h1>
 
-      <p className="text-muted-foreground mt-2">
-        Ask an admin to create a shelter and assign you.
+      <p className="text-muted-foreground max-w-md">
+        You currently do not have access to any shelter in this system.
+        If you believe this is an error, contact an administrator.
       </p>
 
-      <p className="text-muted-foreground mt-1">
-        Contact your shelter administrator if you need access.
-      </p>
-
-      <Button className="mt-6" onClick={handleLogout}>
-        Back to Login
-      </Button>
+      <div className="mt-6 text-sm text-muted-foreground">
+        Owners and admins automatically bypass shelter restrictions.
+      </div>
     </div>
   );
 }
