@@ -13,9 +13,24 @@ export default function AddAnimal() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const { user, canEditAnimals } = useShelter();
+  const {
+    user,
+    isOwner,
+    isAdmin,
+    isStaff,
+    memberships,
+    canEditAnimals,
+  } = useShelter();
 
-  // ✅ upload helper
+  // -------------------------
+  // SAFE SHELTER ACCESS (NEW RBAC)
+  // -------------------------
+  const primaryShelterId =
+    memberships?.[0]?.shelter_id || null;
+
+  // -------------------------
+  // IMAGE UPLOAD
+  // -------------------------
   const uploadAnimalImage = async (file, animalId) => {
     const fileExt = file.name.split(".").pop();
     const filePath = `${animalId}-${Date.now()}.${fileExt}`;
@@ -33,11 +48,15 @@ export default function AddAnimal() {
     return data.publicUrl;
   };
 
-  const handleSubmit = async (data) => {
+  // -------------------------
+  // SUBMIT HANDLER
+  // -------------------------
+  const handleSubmit = async (formData) => {
     try {
       setIsSubmitting(true);
 
-      if (!user?.shelter_id) {
+      // 🔥 OWNER BYPASS (no shelter restriction)
+      if (!isOwner && !primaryShelterId) {
         throw new Error("No shelter assigned to user");
       }
 
@@ -46,15 +65,18 @@ export default function AddAnimal() {
         return;
       }
 
-      // STEP 1: insert animal WITHOUT image
-      const { error } = await supabase
-  .from("animals")
-  .insert([
-    {
-      ...data,
-      shelter_id: user.shelter_id,
-    },
-  ]);
+      const shelterId = isOwner ? null : primaryShelterId;
+
+      // STEP 1: INSERT ANIMAL
+      const { data: inserted, error } = await supabase
+        .from("animals")
+        .insert([
+          {
+            ...formData,
+            shelter_id: shelterId,
+            photo_url: null,
+          },
+        ])
         .select()
         .single();
 
@@ -62,12 +84,15 @@ export default function AddAnimal() {
 
       let photoUrl = null;
 
-      // STEP 2: upload image if exists
-      if (data.photo) {
-        photoUrl = await uploadAnimalImage(data.photo, inserted.id);
+      // STEP 2: upload image
+      if (formData.photo) {
+        photoUrl = await uploadAnimalImage(
+          formData.photo,
+          inserted.id
+        );
       }
 
-      // STEP 3: update animal with photo_url
+      // STEP 3: update image
       if (photoUrl) {
         await supabase
           .from("animals")
@@ -75,10 +100,8 @@ export default function AddAnimal() {
           .eq("id", inserted.id);
       }
 
-      // STEP 4: refresh UI
-      queryClient.invalidateQueries({
-        queryKey: ["animals", user.shelter_id],
-      });
+      // STEP 4: refresh cache
+      queryClient.invalidateQueries({ queryKey: ["animals"] });
 
       navigate("/animals");
     } catch (err) {
@@ -91,6 +114,8 @@ export default function AddAnimal() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+
+      {/* HEADER */}
       <div className="flex items-center gap-3">
         <Link to="/animals">
           <Button variant="ghost" size="icon">
@@ -106,7 +131,11 @@ export default function AddAnimal() {
         </div>
       </div>
 
-      <AnimalForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+      {/* FORM */}
+      <AnimalForm
+        onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+      />
     </div>
   );
 }
