@@ -1,4 +1,3 @@
-✅ 5. Animals.jsx (SAFE RBAC VERSION — NO CRASHES)
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/api/supabaseClient";
@@ -89,8 +88,7 @@ export default function Animals() {
             key={animal.id}
             animal={animal}
             selectable={selectMode}
-            selected={selectedIds.has(animal.id)}
-          />
+            selected={selectedIds.has(animal.id)} onToggleSelect={undefined}          />
         ))}
       </div>
 
@@ -103,13 +101,13 @@ export default function Animals() {
       )}
 
       {/* FOLDERS */}
-      <AnimalFolder title="Dogs" animals={availableDogs} icon={Dog} />
-      <AnimalFolder title="Cats" animals={availableCats} icon={Cat} />
-      <AnimalFolder title="Foster" animals={fosterAnimals} icon={FolderOpen} />
-      <AnimalFolder title="Adopted" animals={adoptedAnimals} icon={FolderHeart} />
-      <AnimalFolder title="Medical" animals={otherAnimals} icon={AlertCircle} />
-      <AnimalFolder title="Domestic" animals={availableDomestic} icon={Home} />
-      <AnimalFolder title="Off Property" animals={offPropertyAnimals} icon={MapPin} />
+      <AnimalFolder title="Dogs" animals={availableDogs} icon={Dog} iconColor={undefined} selectedIds={undefined} onToggleSelect={undefined} />
+      <AnimalFolder title="Cats" animals={availableCats} icon={Cat} iconColor={undefined} selectedIds={undefined} onToggleSelect={undefined} />
+      <AnimalFolder title="Foster" animals={fosterAnimals} icon={FolderOpen} iconColor={undefined} selectedIds={undefined} onToggleSelect={undefined} />
+      <AnimalFolder title="Adopted" animals={adoptedAnimals} icon={FolderHeart} iconColor={undefined} selectedIds={undefined} onToggleSelect={undefined} />
+      <AnimalFolder title="Medical" animals={otherAnimals} icon={AlertCircle} iconColor={undefined} selectedIds={undefined} onToggleSelect={undefined} />
+      <AnimalFolder title="Domestic" animals={availableDomestic} icon={Home} iconColor={undefined} selectedIds={undefined} onToggleSelect={undefined} />
+      <AnimalFolder title="Off Property" animals={offPropertyAnimals} icon={MapPin} iconColor={undefined} selectedIds={undefined} onToggleSelect={undefined} />
     </div>
   );
 }
