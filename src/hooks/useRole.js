@@ -1,69 +1,32 @@
-import { useAuthUser } from "./useAuthUser";
+import { useState } from "react";
 import { supabase } from "@/api/supabaseClient";
-import { useEffect, useState } from "react";
-
-export function useRole() {
-  const { user } = useAuthUser();
-
-  const [profile, setProfile] = useState(null);
-  const [memberships, setMemberships] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      if (!user?.id) {
-        setProfile(null);
-        setMemberships([]);
-        setLoading(false);
-        return;
-      }
-
-      // PROFILE
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      // MEMBERSHIPS (NEW SOURCE OF TRUTH)
-      const { data: memberData } = await supabase
-        .from("shelter_members")
-        .select("*")
-        .eq("user_id", user.id);
-
-      setProfile(profileData || null);
-      setMemberships(memberData || []);
-      setLoading(false);
-    };
-
-    load();
-  }, [user]);
-
-  // -------------------------
-  // OWNER OVERRIDE (GLOBAL ADMIN)
-  // -------------------------
-  const isOwner = profile?.role === "owner";
-
-  // -------------------------
-  // SHELTER ROLES (FROM MEMBERSHIPS)
-  // -------------------------
-  const isAdmin = memberships.some(m => m.role === "admin");
-  const isStaff = memberships.some(m => m.role === "staff");
-  const isVolunteer = memberships.some(m => m.role === "volunteer");
-
-  const allowedShelters = memberships.map(m => m.shelter_id);
-
-  return {
-    user,
-    profile,
-    memberships,
-
-    isOwner,
-    isAdmin,
-    isStaff,
-    isVolunteer,
-
-    allowedShelters,
-    loading,
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PawPrint, Building2, Plus, Loader2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+export default function NoShelter() {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
   };
+
+   return (
+    <div className="flex flex-col items-center justify-center min-h-screen text-center p-6">
+      <h1 className="text-2xl font-bold mb-2">
+        No Shelter Access
+      </h1>
+
+      <p className="text-muted-foreground max-w-md">
+        You currently do not have access to any shelter in this system.
+        If you believe this is an error, contact an administrator.
+      </p>
+
+      <div className="mt-6 text-sm text-muted-foreground">
+        Owners and admins automatically bypass shelter restrictions.
+      </div>
+    </div>
+  );
 }
