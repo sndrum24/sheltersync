@@ -1,0 +1,67 @@
+{
+  "name": "Incident",
+  "type": "object",
+  "properties": {
+    "animal_id": {
+      "type": "string",
+      "description": "The animal this incident belongs to"
+    },
+    "shelter_id": {
+      "type": "string",
+      "description": "The shelter this incident belongs to"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short title/summary of the incident"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of what happened"
+    },
+    "incident_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the incident occurred"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "injury",
+        "illness",
+        "behavior",
+        "medication",
+        "escape",
+        "bite",
+        "other"
+      ],
+      "default": "other",
+      "description": "Type of incident"
+    },
+    "checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "default": [],
+      "description": "Care checklist tasks for this incident"
+    },
+    "resolved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the incident has been resolved"
+    }
+  },
+  "required": [
+    "animal_id",
+    "shelter_id",
+    "title"
+  ]
+}

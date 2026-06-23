@@ -1,0 +1,60 @@
+{
+  "name": "BreedResource",
+  "type": "object",
+  "properties": {
+    "shelter_id": {
+      "type": "string",
+      "description": "The shelter this resource belongs to"
+    },
+    "breed": {
+      "type": "string",
+      "description": "Breed name this resource applies to"
+    },
+    "species": {
+      "type": "string",
+      "enum": [
+        "dog",
+        "cat",
+        "rabbit",
+        "bird",
+        "reptile",
+        "other"
+      ],
+      "description": "Species this resource applies to"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the resource"
+    },
+    "content": {
+      "type": "string",
+      "description": "Text content / notes about this breed"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL to an attached file or document"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Original file name"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "characteristics",
+        "training",
+        "health",
+        "diet",
+        "behavior",
+        "other"
+      ],
+      "default": "characteristics",
+      "description": "Category of the resource"
+    }
+  },
+  "required": [
+    "shelter_id",
+    "breed",
+    "title"
+  ]
+}

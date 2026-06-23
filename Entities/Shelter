@@ -1,0 +1,29 @@
+{
+  "name": "Shelter",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the shelter"
+    },
+    "address": {
+      "type": "string",
+      "description": "Physical address"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "email": {
+      "type": "string",
+      "description": "Contact email"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description of the shelter"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

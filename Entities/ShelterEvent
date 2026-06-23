@@ -1,0 +1,56 @@
+{
+  "name": "ShelterEvent",
+  "type": "object",
+  "properties": {
+    "shelter_id": {
+      "type": "string",
+      "description": "The shelter this event belongs to"
+    },
+    "title": {
+      "type": "string",
+      "description": "Event title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Event description"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the event"
+    },
+    "time": {
+      "type": "string",
+      "description": "Time of the event (e.g. 10:00 AM)"
+    },
+    "location": {
+      "type": "string",
+      "description": "Where the event takes place"
+    },
+    "max_volunteers": {
+      "type": "number",
+      "description": "Maximum number of volunteers allowed"
+    },
+    "signups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "List of volunteers signed up"
+    }
+  },
+  "required": [
+    "shelter_id",
+    "title",
+    "date"
+  ]
+}

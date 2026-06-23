@@ -1,0 +1,35 @@
+{
+  "name": "StaffMessage",
+  "type": "object",
+  "properties": {
+    "shelter_id": {
+      "type": "string",
+      "description": "The shelter this message belongs to"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "Email of the volunteer who sent the message"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "Name of the volunteer who sent the message"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Message subject"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the message has been read by an admin"
+    }
+  },
+  "required": [
+    "shelter_id",
+    "content"
+  ]
+}

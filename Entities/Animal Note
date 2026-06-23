@@ -1,0 +1,23 @@
+{
+  "name": "AnimalNote",
+  "type": "object",
+  "properties": {
+    "animal_id": {
+      "type": "string",
+      "description": "The animal this note belongs to"
+    },
+    "shelter_id": {
+      "type": "string",
+      "description": "The shelter this note belongs to"
+    },
+    "content": {
+      "type": "string",
+      "description": "The note content"
+    }
+  },
+  "required": [
+    "animal_id",
+    "shelter_id",
+    "content"
+  ]
+}

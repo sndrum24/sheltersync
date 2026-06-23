@@ -1,0 +1,51 @@
+{
+  "name": "EmergencyInfo",
+  "type": "object",
+  "properties": {
+    "shelter_id": {
+      "type": "string",
+      "description": "The shelter this info belongs to"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the emergency procedure or contact"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "fire",
+        "medical",
+        "natural_disaster",
+        "security",
+        "evacuation",
+        "contact",
+        "other"
+      ],
+      "default": "other",
+      "description": "Category of emergency info"
+    },
+    "content": {
+      "type": "string",
+      "description": "Detailed instructions or contact information"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Emergency phone number if applicable"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "default": "medium"
+    }
+  },
+  "required": [
+    "shelter_id",
+    "title",
+    "category",
+    "content"
+  ]
+}

@@ -1,0 +1,168 @@
+{
+  "name": "Animal",
+  "type": "object",
+  "properties": {
+    "shelter_id": {
+      "type": "string",
+      "description": "The shelter this animal belongs to"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the animal"
+    },
+    "species": {
+      "type": "string",
+      "enum": [
+        "dog",
+        "cat",
+        "rabbit",
+        "bird",
+        "reptile",
+        "other"
+      ],
+      "description": "Type of animal"
+    },
+    "breed": {
+      "type": "string",
+      "description": "Breed of the animal"
+    },
+    "age_years": {
+      "type": "number",
+      "description": "Approximate age in years"
+    },
+    "age_months": {
+      "type": "number",
+      "description": "Additional months beyond full years"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "male",
+        "female",
+        "unknown"
+      ]
+    },
+    "weight_lbs": {
+      "type": "number",
+      "description": "Weight in pounds"
+    },
+    "color": {
+      "type": "string",
+      "description": "Color/markings description"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "intake",
+        "available",
+        "adopted",
+        "foster",
+        "medical_hold",
+        "quarantine",
+        "holding",
+        "other"
+      ],
+      "default": "intake",
+      "description": "Current status of the animal"
+    },
+    "pending": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the animal has a pending adoption/foster application"
+    },
+    "health_status": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "needs_treatment",
+        "recovering",
+        "critical",
+        "no_walk"
+      ],
+      "default": "healthy"
+    },
+    "spayed_neutered": {
+      "type": "boolean",
+      "default": false
+    },
+    "vaccinated": {
+      "type": "boolean",
+      "default": false
+    },
+    "microchipped": {
+      "type": "boolean",
+      "default": false
+    },
+    "evaluated": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the animal has been behaviorally evaluated"
+    },
+    "playgroup_eligible": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the animal is allowed in playgroup"
+    },
+    "priceless_pups": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the animal is prioritized for the Priceless Pups Campaign"
+    },
+    "intake_type": {
+      "type": "string",
+      "enum": [
+        "stray",
+        "owner_surrender",
+        "community_trapped",
+        "transfer",
+        "born_in_shelter",
+        "other"
+      ],
+      "description": "How the animal came into the shelter"
+    },
+    "house_restrictions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "no_young_children",
+          "no_cats",
+          "older_kids_only",
+          "no_small_dogs",
+          "no_farm_animals",
+          "experienced_owner"
+        ]
+      },
+      "description": "House/adoption restrictions for this animal",
+      "default": []
+    },
+    "intake_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the animal was brought in"
+    },
+    "adoption_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the animal was adopted"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "URL to the animal's photo"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes about the animal"
+    },
+    "location": {
+      "type": "string",
+      "description": "Kennel or enclosure location in the shelter"
+    }
+  },
+  "required": [
+    "name",
+    "species",
+    "status",
+    "shelter_id"
+  ]
+}
