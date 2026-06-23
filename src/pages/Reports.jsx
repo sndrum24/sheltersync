@@ -8,7 +8,7 @@ import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from "d
 import { Home, PawPrint, TrendingUp, Clock, Printer, Users } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import AdoptionAnniversaries from "@/components/reports/AdoptionAnniversaries";
+import AdoptionAnniversaries from "@/components/Reports/AdoptionAnniversaries";
 
 const COLORS = ["hsl(221,70%,48%)", "hsl(0,72%,51%)", "hsl(199,65%,45%)", "hsl(262,55%,55%)", "hsl(0,84%,60%)", "hsl(45,93%,47%)"];
 
