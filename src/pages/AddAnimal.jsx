@@ -12,52 +12,54 @@ export default function AddAnimal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { user } = useShelter();
-console.log("USER FROM HOOK:", JSON.stringify(user, null, 2));
+
+  const { user, canEditAnimals } = useShelter();
 
   const handleSubmit = async (data) => {
-  try {
-    setIsSubmitting(true);
+    try {
+      setIsSubmitting(true);
 
-    const payload = {
-  ...data,
-  shelter_id: user?.shelter_id,
-};
-const { canEditAnimals } = useShelter();
+      // guard clause
+      if (!user?.shelter_id) {
+        throw new Error("No shelter assigned to user");
+      }
 
-if (!canEditAnimals) {
-  return (
-    <div className="p-6">
-      You do not have permission to add animals.
-    </div>
-  );
-}
+      if (!canEditAnimals) {
+        alert("You do not have permission to add animals.");
+        return;
+      }
 
-    console.log("USER:", user);
-    console.log("DATA:", data);
-    console.log("PAYLOAD:", payload);
+      const payload = {
+        ...data,
+        shelter_id: user.shelter_id,
+      };
 
-    const { error } = await supabase
-      .from("animals")
-      .insert([payload]);
+      console.log("PAYLOAD:", payload);
 
-    if (error) {
-      console.error("Supabase Error:", error);
-      throw error;
+     const { data, error } = await supabase
+  .from("animals")
+  .insert([payload])
+  .select();
+
+console.log("INSERT RESULT:", { data, error });
+
+      if (error) {
+        console.error("Supabase Error:", error);
+        throw error;
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: ["animals"],
+      });
+
+      navigate("/animals");
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    queryClient.invalidateQueries({
-      queryKey: ["animals"],
-    });
-
-    navigate("/animals");
-  } catch (error) {
-    console.error(error);
-    alert(error.message);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -78,10 +80,7 @@ if (!canEditAnimals) {
         </div>
       </div>
 
-      <AnimalForm
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-      />
+      <AnimalForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
     </div>
   );
 }

@@ -13,8 +13,7 @@ import { useShelter } from "@/hooks/useShelter";
 
 export default function Dashboard() {
   const { user, shelter } = useShelter();
-
- const { data: animals = [], isLoading } = useQuery({
+    const { data: animals = [], isLoading } = useQuery({
   queryKey: ["animals", user?.shelter_id],
   queryFn: async () => {
     if (!user?.shelter_id) return [];
@@ -38,8 +37,8 @@ export default function Dashboard() {
     return { total, available, adopted, needsCare };
   }, [animals]);
 
-  const { data: recentAnimals = [] } = useQuery({
-  queryKey: ["animals", "recent", user?.shelter_id],
+  const { data: recentAnimals = [], isLoading: recentLoading } = useQuery({
+  queryKey: ["recent-animals", user?.shelter_id],
   queryFn: async () => {
     if (!user?.shelter_id) return [];
 
@@ -55,36 +54,15 @@ export default function Dashboard() {
   },
   enabled: !!user?.shelter_id,
 });
-
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-  {recentAnimals.length === 0 ? (
-    <p className="text-muted-foreground text-sm">
-      No animals added yet.
-    </p>
-  ) : (
-    recentAnimals.map((animal) => (
-      <div
-        key={animal.id}
-        className="border rounded-lg p-3 flex items-center justify-between"
-      >
-        <div>
-          <p className="font-medium">{animal.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {animal.breed || "Unknown breed"}
-          </p>
-        </div>
-
-        <span className="text-xs text-muted-foreground">
-          {new Date(animal.created_at).toLocaleDateString()}
-        </span>
+ if (isLoading) {
+  return (
+    <div className="space-y-3">
+      <div className="animate-pulse text-muted-foreground">
+        Loading dashboard...
       </div>
-    ))
-  )}
-</div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="space-y-10">
