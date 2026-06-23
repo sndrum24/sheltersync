@@ -9,7 +9,7 @@ import StatsCard from "@/components/dashboard/StatsCard";
 import AnimalCard from "@/components/animals/AnimalCard";
 import AnnouncementBanner from "@/components/dashboard/AnnouncementBanner";
 import { useShelter } from "@/hooks/useShelter";
-import { div } from "three/src/nodes/math/OperatorNode";
+
 
 export default function Dashboard() {
   const { user, shelter } = useShelter();
