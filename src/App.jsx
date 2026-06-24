@@ -30,7 +30,10 @@ function App() {
       <Router>
         <Routes>
 
-          {/* AUTH + APP SHELL */}
+          {/* PUBLIC ROUTES */}
+          <Route path="/login" element={<Login />} />
+
+          {/* PROTECTED APP */}
           <Route
             element={
               <ProtectedRoute>
@@ -39,17 +42,16 @@ function App() {
             }
           >
             <Route path="/" element={<Dashboard />} />
+
             <Route path="/animals" element={<Animals />} />
             <Route path="/animals/new" element={<AddAnimal />} />
             <Route path="/animals/:id" element={<AnimalDetail />} />
+
             <Route path="/shelters" element={<ShelterSetup />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/breed-resources" element={<BreedResources />} />
             <Route path="/reports" element={<Reports />} />
           </Route>
-
-          {/* AUTH PAGES */}
-          <Route path="/login" element={<Login />} />
 
           {/* FALLBACK */}
           <Route path="*" element={<PageNotFound />} />

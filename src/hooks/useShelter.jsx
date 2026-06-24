@@ -1,17 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/api/supabaseClient";
-import { useMemo } from "react";
 import { useRole } from "./useRole";
 
 export function useShelter() {
-  const {
-    isOwner,
-    isAdmin,
-    loading: roleLoading,
-  } = useRole();
+  const { isOwner, isAdmin, loading: roleLoading } = useRole();
 
   // -------------------------
-  // SHELTERS QUERY
+  // FETCH SHELTERS ONLY
   // -------------------------
   const { data: shelters = [], isLoading: sheltersLoading } = useQuery({
     queryKey: ["shelters"],
@@ -26,26 +21,21 @@ export function useShelter() {
   });
 
   // -------------------------
-  // ACCESS CONTROL
+  // OPTIONAL UI FILTERING ONLY
   // -------------------------
-  const hasFullAccess = isOwner;
-  const hasAdminAccess = isOwner || isAdmin;
+  const visibleShelters = shelters;
 
-  const accessibleShelters = useMemo(() => {
-    if (isOwner || isAdmin) return shelters;
-    return shelters; // later you can filter via memberships
-  }, [shelters, isOwner, isAdmin]);
+  const hasFullAccess = isOwner || isAdmin;
 
   return {
     shelters,
-    accessibleShelters,
+    visibleShelters,
 
     isOwner,
     isAdmin,
 
-    isLoading: roleLoading || sheltersLoading,
-
     hasFullAccess,
-    hasAdminAccess,
+
+    isLoading: roleLoading || sheltersLoading,
   };
 }

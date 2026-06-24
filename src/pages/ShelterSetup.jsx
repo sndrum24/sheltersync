@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Trash2 } from "lucide-react";
 
 export default function ShelterSetup() {
-  const { isAdmin, isOwner, loading: roleLoading, error } = useShelter();
+  const { isAdmin, isOwner, isLoading } = useShelter();
   const queryClient = useQueryClient();
 
   const [form, setForm] = useState({
@@ -23,36 +23,45 @@ export default function ShelterSetup() {
   const [creating, setCreating] = useState(false);
 
   // -------------------------
-  // SHELTERS QUERY
+  // FETCH SHELTERS
   // -------------------------
-  const { data: shelters = [], isLoading } = useQuery({
+  const { data: shelters = [], isLoading: sheltersLoading } = useQuery({
     queryKey: ["shelters"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("shelters")
-        .select("id, name, address, phone, email, description");
+        .select("*");
 
       if (error) throw error;
       return data || [];
     },
   });
 
+  const loading = isLoading || sheltersLoading;
+
   // -------------------------
   // CREATE SHELTER
   // -------------------------
   const handleCreateShelter = async (e) => {
     e.preventDefault();
+
+    if (!isAdmin && !isOwner) {
+      alert("Not authorized");
+      return;
+    }
+
     setCreating(true);
 
     try {
-      const { data: authUser } = await supabase.auth.getUser();
+      const { data: auth } = await supabase.auth.getUser();
 
-      const { error } = await supabase.from("shelters").insert([
-        {
-          ...form,
-          created_by: authUser?.user?.id,
-        },
-      ]);
+      const userId = auth?.user?.id;
+      if (!userId) throw new Error("No authenticated user");
+
+      const { error } = await supabase.from("shelters").insert({
+        ...form,
+        created_by: userId,
+      });
 
       if (error) throw error;
 
@@ -66,7 +75,8 @@ export default function ShelterSetup() {
         description: "",
       });
     } catch (err) {
-      console.error("Create shelter error:", err);
+      console.error("Create shelter error:", err.message);
+      alert(err.message);
     } finally {
       setCreating(false);
     }
@@ -76,33 +86,44 @@ export default function ShelterSetup() {
   // DELETE SHELTER
   // -------------------------
   const handleDeleteShelter = async (id) => {
-    await supabase.from("shelters").delete().eq("id", id);
+    if (!isAdmin && !isOwner) {
+      alert("Not authorized");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("shelters")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
     queryClient.invalidateQueries({ queryKey: ["shelters"] });
   };
 
   // -------------------------
-  // LOADING / ACCESS GUARDS
+  // LOADING / ACCESS
   // -------------------------
-  if (roleLoading || isLoading) {
-    return <Loader2 className="animate-spin" />;
-  }
-
-  if (error) {
+  if (loading) {
     return (
-      <p className="text-red-500">
-        Role error: {error.message}
-      </p>
+      <div className="flex items-center justify-center p-10">
+        <Loader2 className="animate-spin" />
+      </div>
     );
   }
 
   if (!isAdmin && !isOwner) {
-    return <p>Not authorized</p>;
+    return <p className="text-red-500">Not authorized</p>;
   }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold">Shelter Setup</h1>
 
+      {/* SHELTER LIST */}
       {shelters.map((shelter) => (
         <Card key={shelter.id}>
           <CardContent className="flex justify-between p-4">
@@ -123,6 +144,7 @@ export default function ShelterSetup() {
         </Card>
       ))}
 
+      {/* CREATE SHELTER */}
       <Card>
         <CardContent className="space-y-3">
           <Input
@@ -141,7 +163,34 @@ export default function ShelterSetup() {
             }
           />
 
-          <Button onClick={handleCreateShelter} disabled={creating}>
+          <Input
+            placeholder="Phone"
+            value={form.phone}
+            onChange={(e) =>
+              setForm({ ...form, phone: e.target.value })
+            }
+          />
+
+          <Input
+            placeholder="Email"
+            value={form.email}
+            onChange={(e) =>
+              setForm({ ...form, email: e.target.value })
+            }
+          />
+
+          <Input
+            placeholder="Description"
+            value={form.description}
+            onChange={(e) =>
+              setForm({ ...form, description: e.target.value })
+            }
+          />
+
+          <Button
+            onClick={handleCreateShelter}
+            disabled={creating}
+          >
             {creating ? "Creating..." : "Create Shelter"}
           </Button>
         </CardContent>

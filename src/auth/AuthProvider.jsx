@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/api/supabaseClient";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -23,9 +23,10 @@ export const AuthProvider = ({ children }) => {
       .maybeSingle();
 
     setUser({
-      ...profile,
       id: session.user.id,
+      email: session.user.email,
       role: profile?.role?.toLowerCase() || "volunteer",
+      ...profile,
     });
 
     setLoading(false);
@@ -49,4 +50,8 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuthUser = () => useContext(AuthContext);
+export const useAuthUser = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuthUser must be used inside AuthProvider");
+  return ctx;
+};
