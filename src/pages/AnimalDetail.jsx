@@ -14,7 +14,7 @@ import AnimalNotes from "@/components/animals/AnimalNotes";
 import CareChecklist from "@/components/animals/CareChecklist";
 import { supabase } from "@/api/supabaseClient";
 import { useAuthUser } from "@/auth/AuthProvider";
-
+import PageShell from "@/components/layout/PageShell";
 
 const statusConfig = {
   intake: { label: "Intake", className: "bg-accent/20 text-accent-foreground border-accent/30" },
@@ -294,8 +294,12 @@ const adoptionDate =
   !isNaN(new Date(animal.adoption_date).getTime());
 const daysAtShelter = getDaysAtShelter(animal.intake_date);
 if (editing) {
+  const isReady = !!animal;
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+
+      {/* HEADER */}
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -307,20 +311,35 @@ if (editing) {
         </Button>
 
         <h1 className="font-heading text-2xl font-bold">
-          Edit {animal.name}
+          Edit {animal?.name}
         </h1>
       </div>
 
-      <AnimalForm
-        initial={{
-          ...animal,
-          age_years: animal.age_years ?? "",
-          age_months: animal.age_months ?? "",
-          weight_lbs: animal.weight_lbs ?? "",
-        }}
-        onSubmit={handleUpdate}
-        isSubmitting={isSubmitting}
-      />
+      {/* FORM */}
+      {isReady && (
+        <AnimalForm
+          initial={{
+            ...animal,
+
+            // -----------------------------
+            // SAFE NORMALIZATION (prevents NaN / undefined flicker)
+            // -----------------------------
+            age_years: animal.age_years ?? "",
+            age_months: animal.age_months ?? "",
+            weight_lbs: animal.weight_lbs ?? "",
+
+            // ensure arrays never break form
+            house_restrictions: animal.house_restrictions ?? [],
+
+            // ensure photos always exist
+            photo_url: animal.photo_url ?? "",
+            photo_urls: animal.photo_urls ?? [],
+          }}
+          onSubmit={handleUpdate}
+          isSubmitting={isSubmitting}
+        />
+      )}
+
     </div>
   );
 }
@@ -366,7 +385,10 @@ if (editing) {
           <Button variant="outline" size="sm" onClick={() => handlePrint(animal, notes)} className="gap-1.5">
             <Printer className="w-3.5 h-3.5" /> Print
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setEditing(true)} className="gap-1.5">
+          <Button 
+          variant="outline" size="sm" 
+          onClick={() => setEditing(true)} 
+          className="gap-1.5">
             <Pencil className="w-3.5 h-3.5" /> Edit
           </Button>
           <AlertDialog>

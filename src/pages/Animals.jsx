@@ -91,8 +91,7 @@ export default function Animals() {
   );
 
   return (
-    <div className="space-y-8">
-
+    <PageShell title="Animals">
       {/* HEADER */}
       <div className="flex justify-between items-end gap-4">
         <div>
@@ -156,6 +155,6 @@ export default function Animals() {
       <AnimalFolder title="Medical" animals={otherAnimals} icon={AlertCircle} />
       <AnimalFolder title="Domestic" animals={availableDomestic} icon={Home} />
       <AnimalFolder title="Off Property" animals={offPropertyAnimals} icon={MapPin} />
-    </div>
+    </PageShell>
   );
 }

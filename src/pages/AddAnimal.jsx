@@ -4,6 +4,7 @@ import { supabase } from "@/api/supabaseClient";
 import AnimalForm from "@/components/animals/AnimalForm";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import PageShell from "@/components/layout/PageShell";
 
 export default function AddAnimal() {
   const navigate = useNavigate();
@@ -16,32 +17,55 @@ export default function AddAnimal() {
       const payload = {
         ...data,
 
-        // normalize numeric fields
-        age_years: data.age_years || null,
-        age_months: data.age_months || null,
-        weight_lbs: data.weight_lbs || null,
+        // -----------------------------
+        // SAFE NUMBER NORMALIZATION
+        // (fixes 0 being treated as false)
+        // -----------------------------
+        age_years:
+          data.age_years !== "" && data.age_years !== null
+            ? Number(data.age_years)
+            : null,
 
-        // ensure consistency with AnimalDetail expectations
+        age_months:
+          data.age_months !== "" && data.age_months !== null
+            ? Number(data.age_months)
+            : null,
+
+        weight_lbs:
+          data.weight_lbs !== "" && data.weight_lbs !== null
+            ? Number(data.weight_lbs)
+            : null,
+
+        // -----------------------------
+        // CONSISTENT DEFAULTS
+        // -----------------------------
         status: data.status || "intake",
         health_status: data.health_status || "healthy",
         house_restrictions: data.house_restrictions || [],
 
-        // NEW fields used in AnimalDetail
+        // -----------------------------
+        // EXTRA FIELDS (SAFE DEFAULTS)
+        // -----------------------------
         intake_type: data.intake_type || null,
-        location: data.location || null,
-        color: data.color || null,
+        location: data.location || "",
+        color: data.color || "",
 
-        // booleans safety
-        spayed_neutered: !!data.spayed_neutered,
-        vaccinated: !!data.vaccinated,
-        microchipped: !!data.microchipped,
-        evaluated: !!data.evaluated,
-        playgroup_eligible: !!data.playgroup_eligible,
+        // -----------------------------
+        // BOOLEAN NORMALIZATION
+        // -----------------------------
+        spayed_neutered: Boolean(data.spayed_neutered),
+        vaccinated: Boolean(data.vaccinated),
+        microchipped: Boolean(data.microchipped),
+        evaluated: Boolean(data.evaluated),
+        playgroup_eligible: Boolean(data.playgroup_eligible),
+
         pending: false,
         priceless_pups: false,
       };
 
-      const { error } = await supabase.from("animals").insert(payload);
+      const { error } = await supabase
+        .from("animals")
+        .insert(payload);
 
       if (error) throw error;
 
@@ -55,8 +79,8 @@ export default function AddAnimal() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
+    <PageShell title="Add New Animal">
+      {/* HEADER */}
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -74,9 +98,10 @@ export default function AddAnimal() {
 
       {/* FORM */}
       <AnimalForm
+        initial={null}
         onSubmit={handleCreate}
         isSubmitting={isSubmitting}
       />
-    </div>
+    </PageShell>
   );
 }
