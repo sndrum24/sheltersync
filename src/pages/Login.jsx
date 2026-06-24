@@ -1,25 +1,30 @@
 import { useState } from "react";
 import { supabase } from "@/api/supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
+
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignup, setIsSignup] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setLoading(true);
+    setError(null);
 
     try {
+      // -------------------------
+      // SIGN UP FLOW
+      // -------------------------
       if (isSignup) {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -28,41 +33,56 @@ export default function Login() {
 
         if (error) throw error;
 
-        if (data.user) {
+        if (data?.user) {
+          // create profile
           const { error: profileError } = await supabase
             .from("profiles")
-            .upsert([
-              {
-                id: data.user.id,
-                email: data.user.email,
-                role: "volunteer",
-              },
-            ]);
+            .upsert({
+              id: data.user.id,
+              email: data.user.email,
+              role: "volunteer",
+            });
 
-          if (profileError) {
-            console.error(profileError);
+          if (profileError) throw profileError;
+
+          // optional membership (safe default)
+          const { error: memberError } = await supabase
+            .from("shelter_members")
+            .insert({
+              user_id: data.user.id,
+              role: "volunteer",
+            });
+
+          if (memberError) {
+            console.error("Membership error:", memberError);
           }
         }
 
-        alert(
-          "Account created. Check your email if confirmation is enabled."
-        );
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        alert("Account created. Please log in.");
+        setIsSignup(false);
+      }
+
+      // -------------------------
+      // LOGIN FLOW
+      // -------------------------
+      else {
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
 
-        navigate("/");
+        if (data?.user) {
+          navigate("/dashboard", { replace: true });
+        }
       }
     } catch (err) {
-      alert(err.message);
-      console.error(err);
+      console.error("Auth error:", err.message);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -75,32 +95,28 @@ export default function Login() {
         </CardHeader>
 
         <CardContent>
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4"
-          >
+          <form onSubmit={handleSubmit} className="space-y-4">
+
+            {error && (
+              <p className="text-red-500 text-sm">{error}</p>
+            )}
+
             <div className="space-y-2">
               <Label>Email</Label>
-
               <Input
                 type="email"
                 value={email}
-                onChange={(e) =>
-                  setEmail(e.target.value)
-                }
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
 
             <div className="space-y-2">
               <Label>Password</Label>
-
               <Input
                 type="password"
                 value={password}
-                onChange={(e) =>
-                  setPassword(e.target.value)
-                }
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
@@ -121,9 +137,7 @@ export default function Login() {
               type="button"
               variant="outline"
               className="w-full"
-              onClick={() =>
-                setIsSignup(!isSignup)
-              }
+              onClick={() => setIsSignup(!isSignup)}
             >
               {isSignup
                 ? "Already have an account?"

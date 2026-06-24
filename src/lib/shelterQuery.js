@@ -1,22 +1,22 @@
-export function applyShelterFilter(
-  query,
-  { user }
-) {
-  if (!user) return query.eq("shelter_id", null);
+export function applyShelterFilter(query, { user, memberships }) {
+  if (!user?.role) {
+    return query.eq("shelter_id", "__none__");
+  }
 
   const role = user.role;
 
   // 👑 OWNER: full access
   if (role === "owner") return query;
 
-  // 🟣 ADMIN: all shelters in system OR assigned shelters
-  if (role === "admin") {
-    if (Array.isArray(user.allowed_shelters) && user.allowed_shelters.length) {
-      return query.in("shelter_id", user.allowed_shelters);
-    }
-    return query.eq("shelter_id", user.shelter_id);
+  // 🟣 ADMIN: full access (simple + stable)
+  if (role === "admin") return query;
+
+  // 🟡 STAFF + 🟢 VOLUNTEER: only assigned shelters
+  const allowedShelters = memberships?.map(m => m.shelter_id) || [];
+
+  if (!allowedShelters.length) {
+    return query.eq("shelter_id", "__none__");
   }
 
-  // 🟡 STAFF + 🟢 VOLUNTEER: ONLY assigned shelter
-  return query.eq("shelter_id", user.shelter_id || null);
+  return query.in("shelter_id", allowedShelters);
 }

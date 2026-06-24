@@ -2,7 +2,15 @@ import React, { useMemo } from "react";
 import { supabase } from "@/api/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { PawPrint, Heart, Home, AlertTriangle, Plus } from "lucide-react";
+
+import {
+  PawPrint,
+  Heart,
+  Home,
+  AlertTriangle,
+  Plus,
+} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/dashboard/StatsCard";
 import AnimalCard from "@/components/animals/AnimalCard";
@@ -11,40 +19,32 @@ import { useShelter } from "@/hooks/useShelter";
 
 export default function Dashboard() {
   const {
-    user,
-    shelter,
-    memberships,
+    shelters,
     isOwner,
+    isAdmin,
   } = useShelter();
 
   // -------------------------
-  // DERIVE ACCESSIBLE SHELTERS
+  // SIMPLE ACCESS MODEL (NO MEMBERSHIPS)
   // -------------------------
-  const shelterIds = useMemo(() => {
-    if (isOwner) return null; // owner sees ALL shelters
 
-    return memberships.map(m => m.shelter_id);
-  }, [memberships, isOwner]);
+  const isGlobalAccess = isOwner || isAdmin;
 
   // -------------------------
-  // MAIN ANIMALS QUERY (FIXED RBAC)
+  // MAIN ANIMALS QUERY
   // -------------------------
   const { data: animals = [], isLoading } = useQuery({
-    queryKey: ["animals", shelterIds],
+    queryKey: ["animals"],
     queryFn: async () => {
       let query = supabase.from("animals").select("*");
 
-      // OWNER = ALL SHELTERS
-      if (!isOwner) {
-        query = query.in("shelter_id", shelterIds || []);
-      }
-
+      // Only restrict in future if needed
+      // Right now: everyone sees same data OR you enforce via RLS
       const { data, error } = await query;
       if (error) throw error;
 
       return data || [];
     },
-    enabled: isOwner || (shelterIds?.length > 0),
   });
 
   // -------------------------
@@ -53,10 +53,10 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     return {
       total: animals.length,
-      available: animals.filter(a => a.status === "available").length,
-      adopted: animals.filter(a => a.status === "adopted").length,
+      available: animals.filter((a) => a.status === "available").length,
+      adopted: animals.filter((a) => a.status === "adopted").length,
       needsCare: animals.filter(
-        a =>
+        (a) =>
           a.health_status === "needs_treatment" ||
           a.health_status === "critical"
       ).length,
@@ -64,27 +64,20 @@ export default function Dashboard() {
   }, [animals]);
 
   // -------------------------
-  // RECENT ANIMALS (FIXED RBAC)
+  // RECENT ANIMALS
   // -------------------------
   const { data: recentAnimals = [] } = useQuery({
-    queryKey: ["recent-animals", shelterIds],
+    queryKey: ["recent-animals"],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("animals")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(5);
 
-      if (!isOwner) {
-        query = query.in("shelter_id", shelterIds || []);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
-
       return data || [];
     },
-    enabled: isOwner || (shelterIds?.length > 0),
   });
 
   // -------------------------
@@ -101,7 +94,7 @@ export default function Dashboard() {
   }
 
   // -------------------------
-  // UI (UNCHANGED STRUCTURE)
+  // UI
   // -------------------------
   return (
     <div className="space-y-10">
@@ -115,7 +108,7 @@ export default function Dashboard() {
           </h1>
 
           <p className="text-muted-foreground mt-1">
-            {shelter?.name || "All Shelters"} — overview
+            {isGlobalAccess ? "All Shelters" : "Shelter"} — overview
           </p>
         </div>
 
@@ -131,7 +124,11 @@ export default function Dashboard() {
         <StatsCard title="Total Animals" value={stats.total} icon={PawPrint} />
         <StatsCard title="Available" value={stats.available} icon={Heart} />
         <StatsCard title="Adopted" value={stats.adopted} icon={Home} />
-        <StatsCard title="Needs Care" value={stats.needsCare} icon={AlertTriangle} />
+        <StatsCard
+          title="Needs Care"
+          value={stats.needsCare}
+          icon={AlertTriangle}
+        />
       </div>
 
       {/* Recent */}
@@ -148,7 +145,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-4">
-            {recentAnimals.map(animal => (
+            {recentAnimals.map((animal) => (
               <AnimalCard key={animal.id} animal={animal} />
             ))}
           </div>

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Trash2 } from "lucide-react";
 
 export default function ShelterSetup() {
-  const { isAdmin, isOwner, isLoading } = useShelter();
+  const { isAdmin, isOwner, loading: roleLoading, error } = useShelter();
   const queryClient = useQueryClient();
 
   const [form, setForm] = useState({
@@ -21,23 +21,25 @@ export default function ShelterSetup() {
   });
 
   const [creating, setCreating] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(true);
 
-  if (isLoading) return <Loader2 className="animate-spin" />;
-  if (!isAdmin && !isOwner) return <p>Not authorized</p>;
-
-  const { data: shelters = [] } = useQuery({
+  // -------------------------
+  // SHELTERS QUERY
+  // -------------------------
+  const { data: shelters = [], isLoading } = useQuery({
     queryKey: ["shelters"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("shelters")
-        .select("*");
+        .select("id, name, address, phone, email, description");
 
       if (error) throw error;
       return data || [];
     },
   });
 
+  // -------------------------
+  // CREATE SHELTER
+  // -------------------------
   const handleCreateShelter = async (e) => {
     e.preventDefault();
     setCreating(true);
@@ -63,15 +65,39 @@ export default function ShelterSetup() {
         email: "",
         description: "",
       });
+    } catch (err) {
+      console.error("Create shelter error:", err);
     } finally {
       setCreating(false);
     }
   };
 
+  // -------------------------
+  // DELETE SHELTER
+  // -------------------------
   const handleDeleteShelter = async (id) => {
     await supabase.from("shelters").delete().eq("id", id);
     queryClient.invalidateQueries({ queryKey: ["shelters"] });
   };
+
+  // -------------------------
+  // LOADING / ACCESS GUARDS
+  // -------------------------
+  if (roleLoading || isLoading) {
+    return <Loader2 className="animate-spin" />;
+  }
+
+  if (error) {
+    return (
+      <p className="text-red-500">
+        Role error: {error.message}
+      </p>
+    );
+  }
+
+  if (!isAdmin && !isOwner) {
+    return <p>Not authorized</p>;
+  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -97,31 +123,29 @@ export default function ShelterSetup() {
         </Card>
       ))}
 
-      {showCreateForm && (
-        <Card>
-          <CardContent className="space-y-3">
-            <Input
-              placeholder="Name"
-              value={form.name}
-              onChange={(e) =>
-                setForm({ ...form, name: e.target.value })
-              }
-            />
+      <Card>
+        <CardContent className="space-y-3">
+          <Input
+            placeholder="Name"
+            value={form.name}
+            onChange={(e) =>
+              setForm({ ...form, name: e.target.value })
+            }
+          />
 
-            <Input
-              placeholder="Address"
-              value={form.address}
-              onChange={(e) =>
-                setForm({ ...form, address: e.target.value })
-              }
-            />
+          <Input
+            placeholder="Address"
+            value={form.address}
+            onChange={(e) =>
+              setForm({ ...form, address: e.target.value })
+            }
+          />
 
-            <Button onClick={handleCreateShelter} disabled={creating}>
-              {creating ? "Creating..." : "Create Shelter"}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+          <Button onClick={handleCreateShelter} disabled={creating}>
+            {creating ? "Creating..." : "Create Shelter"}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

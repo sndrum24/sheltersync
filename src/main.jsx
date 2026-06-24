@@ -4,7 +4,7 @@ import App from "./App";
 import "./index.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@/lib/AuthContext"; // or ShelterProvider if that's what you use
+import { AuthProvider } from "@/auth/AuthProvider";// or ShelterProvider if that's what you use
 
 const queryClient = new QueryClient();
 

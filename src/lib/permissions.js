@@ -6,30 +6,32 @@ export const ROLES = {
 };
 
 export const permissions = {
-  manageUsers: ["owner", "admin"],
-  manageShelters: ["owner", "admin"],
+  manageUsers: [ROLES.OWNER, ROLES.ADMIN],
+  manageShelters: [ROLES.OWNER, ROLES.ADMIN],
 
-  deleteAnimals: ["owner", "admin"],
+  deleteAnimals: [ROLES.OWNER, ROLES.ADMIN],
 
-  createAnimals: ["owner", "admin", "staff"],
-  editAnimals: ["owner", "admin", "staff"],
+  createAnimals: [ROLES.OWNER, ROLES.ADMIN, ROLES.STAFF],
+  editAnimals: [ROLES.OWNER, ROLES.ADMIN, ROLES.STAFF],
 
-  processAdoptions: ["owner", "admin", "staff"],
-  createTasks: ["owner", "admin", "staff"],
+  processAdoptions: [ROLES.OWNER, ROLES.ADMIN, ROLES.STAFF],
+  createTasks: [ROLES.OWNER, ROLES.ADMIN, ROLES.STAFF],
 
-  addNotes: ["owner", "admin", "staff", "volunteer"],
+  addNotes: [ROLES.OWNER, ROLES.ADMIN, ROLES.STAFF, ROLES.VOLUNTEER],
 
-  deleteNotes: ["owner", "admin", "staff"],
+  deleteNotes: [ROLES.OWNER, ROLES.ADMIN, ROLES.STAFF],
 
-  viewAnimals: ["owner", "admin", "staff", "volunteer"],
-  viewSchedules: ["owner", "admin", "staff", "volunteer"],
+  viewAnimals: [ROLES.OWNER, ROLES.ADMIN, ROLES.STAFF, ROLES.VOLUNTEER],
+  viewSchedules: [ROLES.OWNER, ROLES.ADMIN, ROLES.STAFF, ROLES.VOLUNTEER],
 };
 
-export function hasPermission(user, permission) {
-  if (!user) return false;
+export function hasPermission(userOrRole, permission) {
+  const role =
+    typeof userOrRole === "string"
+      ? userOrRole
+      : userOrRole?.role;
 
-  const allowedRoles = permissions[permission];
-  if (!allowedRoles) return false;
+  if (!role) return false;
 
-  return allowedRoles.includes(user.role);
+  return permissions[permission]?.includes(role) || false;
 }
