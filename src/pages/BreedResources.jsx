@@ -12,8 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useShelter } from "@/hooks/useShelter";
-
+import { useAuthUser } from "@/auth/AuthProvider";
+import { useRole } from "@/hooks/useRoles";
 const CATEGORY_LABELS = {
   characteristics: "Characteristics",
   training: "Training",
@@ -35,7 +35,8 @@ const CATEGORY_COLORS = {
 const EMPTY_FORM = { breed: "", species: "dog", title: "", content: "", category: "characteristics", file_url: "", file_name: "" };
 
 export default function BreedResources() {
-  const { user, isAdmin } = useShelter();
+  const { user} = useAuthUser();
+  const { isAdmin } = useRole();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);

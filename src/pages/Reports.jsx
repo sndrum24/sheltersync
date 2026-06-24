@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { supabase } from "@/api/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
-import { useShelter } from "@/hooks/useShelter";
+import { useAuthUser } from "@/auth/AuthProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid, Legend } from "recharts";
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
@@ -22,7 +22,7 @@ const INTAKE_COLORS = {
 };
 
 export default function Reports() {
-  const { user } = useShelter();
+  const { user } = useAuthUser();
   const [monthsBack] = useState(6);
 
   const { data: animals = [], isLoading } = useQuery({

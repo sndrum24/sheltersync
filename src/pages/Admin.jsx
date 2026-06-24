@@ -1,58 +1,77 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/api/supabaseClient";
-import { useRole } from "@/hooks/useRole";
+import { useRole } from "@/hooks/useRoles";
 import { Navigate } from "react-router-dom";
 
 export default function Admin() {
   const { isOwner, isAdmin, loading } = useRole();
 
   const [users, setUsers] = useState([]);
-  const [shelters, setShelters] = useState([]);
-  const [members, setMembers] = useState([]);
-
   const [userId, setUserId] = useState("");
-  const [shelterId, setShelterId] = useState("");
   const [role, setRole] = useState("volunteer");
 
-  if (loading) return null;
-  if (!isOwner && !isAdmin) return <Navigate to="/" replace />;
+  // -------------------------
+  // AUTH GUARD
+  // -------------------------
+  if (loading) return <div>Loading...</div>;
 
+  if (!isOwner && !isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
+  // -------------------------
+  // LOAD DATA
+  // -------------------------
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-    const { data: userData } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
-      .select("id, email");
+      .select("id, email, role");
 
-    const { data: shelterData } = await supabase
-      .from("shelters")
-      .select("id, name");
+    if (error) {
+      console.error(error);
+      return;
+    }
 
-    const { data: memberData } = await supabase
-      .from("shelter_members")
-      .select("*");
-
-    setUsers(userData || []);
-    setShelters(shelterData || []);
-    setMembers(memberData || []);
+    setUsers(data || []);
   };
 
-  const assignRole = async () => {
-    if (!userId || !shelterId || !role) return;
+  // -------------------------
+  // UPDATE ROLE
+  // -------------------------
+  const updateRole = async () => {
+    if (!userId || !role) return;
 
     const { error } = await supabase
-      .from("shelter_members")
-      .insert([{ user_id: userId, shelter_id: shelterId, role }]);
+      .from("profiles")
+      .update({ role })
+      .eq("user_id", user.id)
 
-    if (error) return alert(error.message);
+    if (error) {
+      alert(error.message);
+      return;
+    }
 
     loadData();
   };
 
-  const removeRole = async (id) => {
-    await supabase.from("shelter_members").delete().eq("id", id);
+  // -------------------------
+  // RESET ROLE
+  // -------------------------
+  const resetRole = async (id) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ role: "volunteer" })
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
     loadData();
   };
 
@@ -60,51 +79,47 @@ export default function Admin() {
     <div style={{ padding: 24 }}>
       <h1>Admin Control Center</h1>
 
-      {/* ASSIGN */}
-      <div>
+      {/* ASSIGN ROLE */}
+      <div style={{ marginBottom: 20 }}>
         <select onChange={(e) => setUserId(e.target.value)}>
           <option value="">User</option>
           {users.map(u => (
-            <option key={u.id} value={u.id}>{u.email}</option>
-          ))}
-        </select>
-
-        <select onChange={(e) => setShelterId(e.target.value)}>
-          <option value="">Shelter</option>
-          {shelters.map(s => (
-            <option key={s.id} value={s.id}>{s.name}</option>
+            <option key={u.id} value={u.id}>
+              {u.email} ({u.role})
+            </option>
           ))}
         </select>
 
         <select value={role} onChange={(e) => setRole(e.target.value)}>
+          <option value="owner">Owner</option>
           <option value="admin">Admin</option>
           <option value="staff">Staff</option>
           <option value="volunteer">Volunteer</option>
         </select>
 
-        <button onClick={assignRole}>Assign</button>
+        <button onClick={updateRole}>
+          Update Role
+        </button>
       </div>
 
-      {/* LIST */}
-      <table border="1">
+      {/* USERS TABLE */}
+      <table border="1" cellPadding="8">
         <thead>
           <tr>
-            <th>User</th>
-            <th>Shelter</th>
+            <th>Email</th>
             <th>Role</th>
-            <th></th>
+            <th>Action</th>
           </tr>
         </thead>
 
         <tbody>
-          {members.map(m => (
-            <tr key={m.id}>
-              <td>{m.user_id}</td>
-              <td>{m.shelter_id}</td>
-              <td>{m.role}</td>
+          {users.map(u => (
+            <tr key={u.id}>
+              <td>{u.email}</td>
+              <td>{u.role}</td>
               <td>
-                <button onClick={() => removeRole(m.id)}>
-                  Remove
+                <button onClick={() => resetRole(u.id)}>
+                  Reset to Volunteer
                 </button>
               </td>
             </tr>

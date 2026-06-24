@@ -13,7 +13,7 @@ import AnimalForm from "@/components/animals/AnimalForm";
 import AnimalNotes from "@/components/animals/AnimalNotes";
 import CareChecklist from "@/components/animals/CareChecklist";
 import { supabase } from "@/api/supabaseClient";
-import { useShelter } from "@/hooks/useShelter";
+import { useAuthUser } from "@/auth/AuthProvider";
 
 
 const statusConfig = {
@@ -138,7 +138,7 @@ export default function AnimalDetail() {
     setTimeout(() => win.print(), 400);
   };
 
- const { user } = useShelter();
+ const { user } = useAuthUser();
 
 const { data: animal, isLoading } = useQuery({
   queryKey: ["animal", id],

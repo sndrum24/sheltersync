@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { supabase } from "@/api/supabaseClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useShelter } from "@/hooks/useShelter";
+import { supabase } from "@/api/supabaseClient";
+import { useAuthUser } from "@/auth/AuthProvider";
+import { useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Trash2 } from "lucide-react";
 
 export default function ShelterSetup() {
-  const { isAdmin, isOwner, isLoading } = useShelter();
+  const { user, loading } = useAuthUser();
   const queryClient = useQueryClient();
+
+  const role = user?.role?.toLowerCase();
+  const isAdmin = role === "admin" || role === "owner";
+  const isOwner = role === "owner";
 
   const [form, setForm] = useState({
     name: "",
@@ -22,121 +26,87 @@ export default function ShelterSetup() {
 
   const [creating, setCreating] = useState(false);
 
-  // -------------------------
-  // FETCH SHELTERS
-  // -------------------------
   const { data: shelters = [], isLoading: sheltersLoading } = useQuery({
     queryKey: ["shelters"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("shelters")
-        .select("*");
-
+      const { data, error } = await supabase.from("shelters").select("*");
       if (error) throw error;
       return data || [];
     },
   });
 
-  const loading = isLoading || sheltersLoading;
+  const isLoading = loading || sheltersLoading;
 
-  // -------------------------
-  // CREATE SHELTER
-  // -------------------------
   const handleCreateShelter = async (e) => {
     e.preventDefault();
 
-    if (!isAdmin && !isOwner) {
-      alert("Not authorized");
-      return;
-    }
+    if (!isAdmin) return alert("Not authorized");
 
     setCreating(true);
 
-    try {
-      const { data: auth } = await supabase.auth.getUser();
+    const { error } = await supabase.from("shelters").insert({
+      ...form,
+      created_by: user.id,
+    });
 
-      const userId = auth?.user?.id;
-      if (!userId) throw new Error("No authenticated user");
+    setCreating(false);
 
-      const { error } = await supabase.from("shelters").insert({
-        ...form,
-        created_by: userId,
-      });
+    if (error) return alert(error.message);
 
-      if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ["shelters"] });
 
-      queryClient.invalidateQueries({ queryKey: ["shelters"] });
-
-      setForm({
-        name: "",
-        address: "",
-        phone: "",
-        email: "",
-        description: "",
-      });
-    } catch (err) {
-      console.error("Create shelter error:", err.message);
-      alert(err.message);
-    } finally {
-      setCreating(false);
-    }
+    setForm({
+      name: "",
+      address: "",
+      phone: "",
+      email: "",
+      description: "",
+    });
   };
 
-  // -------------------------
-  // DELETE SHELTER
-  // -------------------------
   const handleDeleteShelter = async (id) => {
-    if (!isAdmin && !isOwner) {
-      alert("Not authorized");
-      return;
-    }
+    if (!isAdmin) return alert("Not authorized");
 
     const { error } = await supabase
       .from("shelters")
       .delete()
       .eq("id", id);
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) return alert(error.message);
 
     queryClient.invalidateQueries({ queryKey: ["shelters"] });
   };
 
-  // -------------------------
-  // LOADING / ACCESS
-  // -------------------------
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-10">
+      <div className="flex justify-center p-10">
         <Loader2 className="animate-spin" />
       </div>
     );
   }
 
-  if (!isAdmin && !isOwner) {
+  if (!isAdmin) {
     return <p className="text-red-500">Not authorized</p>;
   }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+
       <h1 className="text-3xl font-bold">Shelter Setup</h1>
 
-      {/* SHELTER LIST */}
-      {shelters.map((shelter) => (
-        <Card key={shelter.id}>
+      {shelters.map((s) => (
+        <Card key={s.id}>
           <CardContent className="flex justify-between p-4">
             <div>
-              <h3 className="font-semibold">{shelter.name}</h3>
+              <h3 className="font-semibold">{s.name}</h3>
               <p className="text-sm text-muted-foreground">
-                {shelter.address}
+                {s.address}
               </p>
             </div>
 
             <Button
               variant="destructive"
-              onClick={() => handleDeleteShelter(shelter.id)}
+              onClick={() => handleDeleteShelter(s.id)}
             >
               <Trash2 className="w-4 h-4" />
             </Button>
@@ -144,7 +114,6 @@ export default function ShelterSetup() {
         </Card>
       ))}
 
-      {/* CREATE SHELTER */}
       <Card>
         <CardContent className="space-y-3">
           <Input
@@ -187,14 +156,12 @@ export default function ShelterSetup() {
             }
           />
 
-          <Button
-            onClick={handleCreateShelter}
-            disabled={creating}
-          >
+          <Button onClick={handleCreateShelter} disabled={creating}>
             {creating ? "Creating..." : "Create Shelter"}
           </Button>
         </CardContent>
       </Card>
+
     </div>
   );
 }

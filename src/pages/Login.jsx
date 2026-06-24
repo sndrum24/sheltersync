@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/api/supabaseClient";
 import { useNavigate } from "react-router-dom";
 
@@ -10,6 +10,21 @@ export default function Login() {
   const [error, setError] = useState(null);
 
   const navigate = useNavigate();
+
+  // ✅ FIX: central auth listener (handles redirect safely)
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        navigate("/", { replace: true });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,30 +38,21 @@ export default function Login() {
       // SIGN UP
       // -------------------------
       if (isSignup) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
+        const { error } = await supabase.auth.signUp({
+          email: email.trim(),
           password,
         });
 
         if (error) throw error;
 
-        const user = data?.user;
+        const { data: userData } = await supabase.auth.getUser();
+        const user = userData?.user;
 
         if (user) {
-          // Create profile (safe default role)
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .upsert({
-              id: user.id,
-              email: user.email,
-              role: "volunteer",
-            });
-
-          if (profileError) throw profileError;
-
-          // Optional fallback membership (safe default)
-          await supabase.from("shelter_members").insert({
+          await supabase.from("profiles").insert({
+            id: user.id,
             user_id: user.id,
+            email: email.trim(),
             role: "volunteer",
           });
         }
@@ -62,7 +68,7 @@ export default function Login() {
       // -------------------------
       else {
         const { data, error } = await supabase.auth.signInWithPassword({
-          email,
+          email: email.trim(),
           password,
         });
 
@@ -71,67 +77,54 @@ export default function Login() {
         if (data?.user) {
           setEmail("");
           setPassword("");
-          navigate("/", { replace: true });
+
+          console.log("LOGIN SUCCESS:", data.user);
+
+          // ❌ REMOVED navigate from here (handled by useEffect)
         }
       }
     } catch (err) {
       setError(err.message);
+      console.error("Login error:", err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
-    
-    <form onSubmit={handleSubmit} className="space-y-4 w-80 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <form onSubmit={handleSubmit} className="space-y-4 w-80 text-center">
+        <h1 className="text-2xl font-bold">Login</h1>
 
-      {/* HEADER */}
-      <div className="mb-6">
-        <div className="text-5xl mb-2">🐾</div>
-
-        <h1 className="text-2xl font-bold">
-          Welcome to <span className="text-red-600">ShelterSync</span>
-        </h1>
-
-        <p className="text-sm text-gray-500 mt-1">
-          Together, we make a difference.
-        </p>
-      </div>
-
-      {/* LOGIN CARD */}
-      <div className="space-y-3 text-left">
+        {error && <p className="text-red-500">{error}</p>}
 
         <input
-          className="w-full border p-2 rounded"
+          className="w-full border p-2"
           placeholder="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
-          className="w-full border p-2 rounded"
-          placeholder="password"
+          className="w-full border p-2"
           type="password"
+          placeholder="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button className="w-full bg-black text-white p-2 rounded">
-          {loading ? "Loading..." : isSignup ? "Create Account" : "Login"}
+        <button className="w-full bg-black text-white p-2">
+          {loading ? "Loading..." : isSignup ? "Sign Up" : "Login"}
         </button>
 
-        {/* TOGGLE */}
         <button
           type="button"
           onClick={() => setIsSignup(!isSignup)}
-          className="w-full border p-2 rounded"
+          className="w-full border p-2"
         >
-          {isSignup ? "Login" : "Sign Up"}
+          {isSignup ? "Switch to Login" : "Switch to Sign Up"}
         </button>
-
-      </div>
-    </form>
-  </div>
-);
+      </form>
+    </div>
+  );
 }

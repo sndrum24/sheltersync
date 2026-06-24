@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { supabase } from "@/api/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-
+import { useRole } from "@/hooks/useRoles";
 import {
   PawPrint,
   Heart,
@@ -10,19 +10,17 @@ import {
   AlertTriangle,
   Plus,
 } from "lucide-react";
-
+import { useShelter } from "@/hooks/useShelter";
 import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/dashboard/StatsCard";
 import AnimalCard from "@/components/animals/AnimalCard";
 import AnnouncementBanner from "@/components/dashboard/AnnouncementBanner";
-import { useShelter } from "@/hooks/useShelter";
-
+import { useAuthUser } from "@/auth/AuthProvider";
 export default function Dashboard() {
-  const {
-    shelters,
-    isOwner,
-    isAdmin,
-  } = useShelter();
+   const { user } = useAuthUser();
+    const { isAdmin, isOwner } = useRole();
+    const { shelters } = useShelter();
+
 
   // -------------------------
   // SIMPLE ACCESS MODEL (NO MEMBERSHIPS)
@@ -96,11 +94,14 @@ export default function Dashboard() {
   // -------------------------
   // UI
   // -------------------------
-  return (
-    <div className="space-y-10">
-      <AnnouncementBanner />
+ return (
+  <div className="space-y-10">
 
-      {/* Header */}
+    <AnnouncementBanner />
+
+    <div className="p-6 space-y-6">
+
+      {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl sm:text-4xl font-bold">
@@ -119,19 +120,34 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {/* Stats */}
+      {/* WELCOME */}
+      <div>
+        <h1 className="text-2xl font-bold">
+          Welcome, {user?.email}
+        </h1>
+
+        <div className="text-sm text-gray-500">
+          Role: {isOwner ? "Owner" : isAdmin ? "Admin" : "User"}
+        </div>
+      </div>
+
+      {/* BASIC STATS */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="p-4 border rounded">
+          <h2 className="text-lg font-semibold">Shelters</h2>
+          <p className="text-2xl">{shelters.length}</p>
+        </div>
+      </div>
+
+      {/* MAIN STATS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard title="Total Animals" value={stats.total} icon={PawPrint} />
         <StatsCard title="Available" value={stats.available} icon={Heart} />
         <StatsCard title="Adopted" value={stats.adopted} icon={Home} />
-        <StatsCard
-          title="Needs Care"
-          value={stats.needsCare}
-          icon={AlertTriangle}
-        />
+        <StatsCard title="Needs Care" value={stats.needsCare} icon={AlertTriangle} />
       </div>
 
-      {/* Recent */}
+      {/* RECENT */}
       <div>
         <div className="flex justify-between mb-4">
           <h2 className="text-xl font-semibold">Recent Animals</h2>
@@ -151,6 +167,8 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
     </div>
-  );
+  </div>
+);
 }

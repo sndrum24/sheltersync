@@ -1,33 +1,54 @@
 import { supabase } from "@/api/supabaseClient";
 
-export async function deleteAnimalImage({ animalId, photoUrl, currentUrls }) {
+export async function deleteAnimalImage({
+  animalId,
+  photoUrl,
+  currentUrls = [],
+}) {
   if (!photoUrl) return;
 
-  // 1. Extract file path from Supabase URL
-  const urlParts = photoUrl.split("/animal-photos/");
-  const filePath = urlParts[1];
+  try {
+    // -------------------------
+    // 1. SAFELY EXTRACT FILE PATH
+    // -------------------------
+    const url = new URL(photoUrl);
+    const pathParts = url.pathname.split("/animal-photos/");
 
-  // 2. Delete from storage
-  const { error: storageError } = await supabase.storage
-    .from("animal-photos")
-    .remove([filePath]);
+    if (!pathParts[1]) {
+      throw new Error("Invalid storage path format");
+    }
 
-  if (storageError) {
-    console.error("Storage delete error:", storageError);
+    const filePath = decodeURIComponent(pathParts[1]);
+
+    // -------------------------
+    // 2. DELETE FROM STORAGE
+    // -------------------------
+    const { error: storageError } = await supabase.storage
+      .from("animal-photos")
+      .remove([filePath]);
+
+    if (storageError) {
+      console.error("Storage delete error:", storageError);
+    }
+
+    // -------------------------
+    // 3. UPDATE DB ARRAY SAFELY
+    // -------------------------
+    const updatedUrls = currentUrls.filter((url) => url !== photoUrl);
+
+    const { error: dbError } = await supabase
+      .from("animals")
+      .update({ photo_urls: updatedUrls })
+      .eq("id", animalId);
+
+    if (dbError) {
+      console.error("DB update error:", dbError);
+      throw dbError;
+    }
+
+    return updatedUrls;
+  } catch (err) {
+    console.error("deleteAnimalImage failed:", err);
+    throw err;
   }
-
-  // 3. Remove from DB array
-  const updatedUrls = (currentUrls || []).filter((url) => url !== photoUrl);
-
-  const { error: dbError } = await supabase
-    .from("animals")
-    .update({ photo_urls: updatedUrls })
-    .eq("id", animalId);
-
-  if (dbError) {
-    console.error("DB update error:", dbError);
-    throw dbError;
-  }
-
-  return updatedUrls;
 }

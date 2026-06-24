@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { supabase } from "@/api/supabaseClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useShelter } from "@/hooks/useShelter";
+import { useAuthUser } from "@/auth/AuthProvider";
 import { AlertTriangle, Info, X, Megaphone, Plus, ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+
 
 const priorityConfig = {
   info: { icon: Info, bg: "bg-blue-50 border-blue-200", text: "text-blue-800", icon_color: "text-blue-500" },
@@ -18,7 +19,8 @@ const priorityConfig = {
 const emptyForm = { title: "", message: "", priority: "info" };
 
 export default function AnnouncementBanner() {
-  const { user, isAdmin } = useShelter();
+  const { user } = useAuthUser();
+  const isAdmin = user?.role === "admin";
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -39,6 +41,7 @@ export default function AnnouncementBanner() {
   if (error) throw error;
   return data;
 },
+  enabled: !!user?.shelter_id, // 🔥 IMPORTANT
   })
 
   const handleCreate = async () => {

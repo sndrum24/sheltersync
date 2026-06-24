@@ -1,41 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/api/supabaseClient";
-import { useRole } from "./useRole";
+import { useAuthUser } from "@/auth/AuthProvider";
 
 export function useShelter() {
-  const { isOwner, isAdmin, loading: roleLoading } = useRole();
+  const { user, loading } = useAuthUser();
 
-  // -------------------------
-  // FETCH SHELTERS ONLY
-  // -------------------------
-  const { data: shelters = [], isLoading: sheltersLoading } = useQuery({
+  const shelterId = user?.shelter_id;
+
+  const { data: shelters = [] } = useQuery({
     queryKey: ["shelters"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("shelters")
-        .select("*");
-
+      const { data, error } = await supabase.from("shelters").select("*");
       if (error) throw error;
       return data || [];
     },
   });
 
-  // -------------------------
-  // OPTIONAL UI FILTERING ONLY
-  // -------------------------
-  const visibleShelters = shelters;
-
-  const hasFullAccess = isOwner || isAdmin;
-
   return {
     shelters,
-    visibleShelters,
 
-    isOwner,
-    isAdmin,
+    user,
 
-    hasFullAccess,
+    currentShelter: shelters.find((s) => s.id === shelterId) || null,
 
-    isLoading: roleLoading || sheltersLoading,
+    hasShelter: !!shelterId,
+
+    loading,
   };
 }

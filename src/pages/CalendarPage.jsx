@@ -12,13 +12,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { useShelter } from "@/hooks/useShelter";
+import { useAuthUser } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
-
+import { useRole } from "@/hooks/useRoles";
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function CalendarPage() {
-  const { user, isAdmin } = useShelter();
+  const { user } = useAuthUser();
+  const { isAdmin } = useRole();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -29,18 +30,19 @@ export default function CalendarPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const { data: events = [] } = useQuery({
-    queryKey: ["shelter-events", user?.shelter_id],
-    queryFn: async () => {
-  const { data, error } = await supabase
-    .from("shelter_events")
-    .select("*")
-    .eq("shelter_id", user.shelter_id)
-    .order("date");
+  queryKey: ["shelter-events", shelterId],
+  enabled: !!shelterId, // 🔥 IMPORTANT
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("shelter_events")
+      .select("*")
+      .eq("shelter_id", shelterId)
+      .order("date", { ascending: true });
 
-  if (error) throw error;
-  return data;
-},
-  });
+    if (error) throw error;
+    return data || [];
+  },
+});
 
   const daysInMonth = eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
   const startPad = getDay(startOfMonth(currentMonth));

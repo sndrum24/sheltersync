@@ -7,8 +7,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+  const loadUser = async (sessionArg) => {
+    const { data } = await supabase.auth.getSession();
+    const session = sessionArg || data?.session;
 
     if (!session?.user) {
       setUser(null);
@@ -16,31 +17,51 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", session.user.id)
+      .eq("user_id", session.user.id)
       .maybeSingle();
 
-    setUser({
+    if (error) {
+      console.error("Profile load error:", error);
+    }
+
+    const role = profile?.role?.toLowerCase() || "volunteer";
+
+    const normalizedUser = {
       id: session.user.id,
       email: session.user.email,
-      role: profile?.role?.toLowerCase() || "volunteer",
-      ...profile,
-    });
+      role,
+      shelter_id: profile?.shelter_id || null,
 
+      // ✅ RBAC FLAGS (CRITICAL FIX)
+      isOwner: role === "owner",
+      isAdmin: role === "admin" || role === "owner",
+      isStaff: role === "staff" || role === "admin" || role === "owner",
+      isVolunteer: role === "volunteer",
+    };
+
+    setUser(normalizedUser);
     setLoading(false);
   };
 
   useEffect(() => {
+    let mounted = true;
+
     loadUser();
 
-    const { data: { subscription } } =
-      supabase.auth.onAuthStateChange(() => {
-        loadUser();
-      });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      loadUser(session);
+    });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
@@ -50,8 +71,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuthUser = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuthUser must be used inside AuthProvider");
-  return ctx;
-};
+export const useAuthUser = () => useContext(AuthContext);

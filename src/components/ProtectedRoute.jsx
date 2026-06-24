@@ -1,16 +1,15 @@
-import { useShelter } from "@/hooks/useShelter";
+import { useAuthUser } from "@/auth/AuthProvider";
 import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({ children }) {
-  const { user, isLoading } = useShelter();
+  const { user, loading } = useAuthUser();
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div>Loading...</div>;
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  // IMPORTANT FIX: don't immediately reject unknown auth state
+  if (user === undefined) return <div>Loading...</div>;
+
+  if (!user) return <Navigate to="/login" replace />;
 
   return children;
 }

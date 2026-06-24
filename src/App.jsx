@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
-import PageNotFound from "./lib/PageNotFound";
+
 import AppLayout from "@/components/layout/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Animals from "@/pages/Animals";
@@ -33,28 +33,25 @@ function App() {
           {/* PUBLIC ROUTES */}
           <Route path="/login" element={<Login />} />
 
-          {/* PROTECTED APP */}
-          <Route
-            element={
-              <ProtectedRoute>
-                <AppLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/" element={<Dashboard />} />
-
-            <Route path="/animals" element={<Animals />} />
-            <Route path="/animals/new" element={<AddAnimal />} />
-            <Route path="/animals/:id" element={<AnimalDetail />} />
-
-            <Route path="/shelters" element={<ShelterSetup />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/breed-resources" element={<BreedResources />} />
-            <Route path="/reports" element={<Reports />} />
-          </Route>
+<Route
+  element={
+    <ProtectedRoute>
+      <AppLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route path="/" element={<Dashboard />} />
+  <Route path="/animals" element={<Animals />} />
+  <Route path="/animals/new" element={<AddAnimal />} />
+  <Route path="/animals/:id" element={<AnimalDetail />} />
+  <Route path="/shelters" element={<ShelterSetup />} />
+  <Route path="/calendar" element={<CalendarPage />} />
+  <Route path="/breed-resources" element={<BreedResources />} />
+  <Route path="/reports" element={<Reports />} />
+</Route>
 
           {/* FALLBACK */}
-          <Route path="*" element={<PageNotFound />} />
+          <Route path="*" element={<div>404</div>} />
 
         </Routes>
 
