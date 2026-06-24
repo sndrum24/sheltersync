@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/api/supabaseClient";
+import { useQueryClient } from "@tanstack/react-query";
+
 import AnimalForm from "@/components/animals/AnimalForm";
+import PageShell from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import PageShell from "@/components/layout/PageShell";
 
 export default function AddAnimal() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreate = async (data) => {
@@ -19,33 +22,29 @@ export default function AddAnimal() {
 
         // -----------------------------
         // SAFE NUMBER NORMALIZATION
-        // (fixes 0 being treated as false)
         // -----------------------------
         age_years:
-          data.age_years !== "" && data.age_years !== null
+          data.age_years !== "" && data.age_years != null
             ? Number(data.age_years)
             : null,
 
         age_months:
-          data.age_months !== "" && data.age_months !== null
+          data.age_months !== "" && data.age_months != null
             ? Number(data.age_months)
             : null,
 
         weight_lbs:
-          data.weight_lbs !== "" && data.weight_lbs !== null
+          data.weight_lbs !== "" && data.weight_lbs != null
             ? Number(data.weight_lbs)
             : null,
 
         // -----------------------------
-        // CONSISTENT DEFAULTS
+        // DEFAULT STRINGS / FALLBACKS
         // -----------------------------
         status: data.status || "intake",
         health_status: data.health_status || "healthy",
         house_restrictions: data.house_restrictions || [],
 
-        // -----------------------------
-        // EXTRA FIELDS (SAFE DEFAULTS)
-        // -----------------------------
         intake_type: data.intake_type || null,
         location: data.location || "",
         color: data.color || "",
@@ -59,6 +58,9 @@ export default function AddAnimal() {
         evaluated: Boolean(data.evaluated),
         playgroup_eligible: Boolean(data.playgroup_eligible),
 
+        // -----------------------------
+        // SYSTEM DEFAULT FIELDS
+        // -----------------------------
         pending: false,
         priceless_pups: false,
       };
@@ -69,9 +71,13 @@ export default function AddAnimal() {
 
       if (error) throw error;
 
+      // refresh animals list everywhere
+      queryClient.invalidateQueries({ queryKey: ["animals"] });
+
+      // go back
       navigate("/animals");
     } catch (err) {
-      console.error(err);
+      console.error("Create animal error:", err);
       alert(err.message);
     } finally {
       setIsSubmitting(false);
@@ -91,7 +97,7 @@ export default function AddAnimal() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
 
-        <h1 className="font-heading text-2xl font-bold">
+        <h1 className="text-2xl font-bold">
           Add New Animal
         </h1>
       </div>
